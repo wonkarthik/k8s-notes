@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+   name: vote-green
+spec:
+   replicas: 5
+   strategy:
+      type: RollingUpdate
+      rollingUpdate:
+         maxSurge: 2
+         maxUnavailable: 1
+   revisionHistoryLimit: 4
+   paused: false
+   selector:
+      matchLabels:
+        role: vote
+   minReadySeconds: 10
+   template: 
+      metadata:
+        labels:
+          role: vote
+          app: python 
+          release: bluegreen
+          code: green
+      spec:
+        containers:
+          - name: vote-app
+            image: wonchaitanya/vote:v3
+            ports:
+              - containerPort: 80
+                protocol: TCP 
+          

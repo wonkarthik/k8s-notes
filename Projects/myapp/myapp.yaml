@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+   name: my-app
+spec:
+   replicas: 5
+   strategy:
+     type: RollingUpdate
+     rollingUpdate: 
+       maxSurge: 2
+       maxUnavailable: 1
+   revisionHistoryLimit: 5
+   paused: false
+   minReadySeconds: 10
+   selector:
+      matchLabels:
+          name: my-app
+          version: v1
+          tier: dev
+      matchExpressions:
+       - {key: version, operator: In,values: [v1,v2,dev]}
+   template:
+      metadata:
+          name: my-app
+          labels:
+             version: v1
+             tier: dev
+      spec:
+        containers:    
+          - name: python
+            image: schoolofdevops/redis:latest
+            ports:
+              - containerPort: 6379
+                protocol: TCP
+            resources:
+             limits:
+               cpu: "200m" 
+               memory: "250Mi"
+             requests:
+                cpu: "100m"
+                memory: "100Mi"
+        restartPolicy: Always
+        affinity:
+          podAffinity:
+             preferredDuringSchedulingIgnoredDuringExecution:
+               - weight: 1
+                 podAffinityTerm:
+                    labelSelector: 
+                      matchLabels:
+                         tier: dev
+                    topologyKey: kubernetes.io/hostname    
+          podAntiAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              - labelSelector:
+                  matchExpressions:
+                   - key: tier
+                     operator: In
+                     values:
+                       - dev
+                topologyKey: "kubernetes.io/hostname"
+
+
+
+
+
+
+              

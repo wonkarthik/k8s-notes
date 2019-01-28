@@ -1,0 +1,171 @@
+Role Based Access Control (RBAC)
+Group	User	Namespaces	Resources	Access Type (verbs)
+ops	maya	all		all		get, list, watch, update, patch, create, delete, deletecollection
+dev	kim	instavote	deployments, statefulsets, services, pods, configmaps, secrets, replicasets, ingresses, endpoints, cronjobs, jobs, persistentvolumeclaims	                                            get, list , watch, update, patch, create
+interns	yono	instavote	readonly	get, list, watch
+
+Creating Kubernetes Users and Groups
+Generate the user's private key
+
+[root@kube-master ~]# cd .kube/
+[root@kube-master .kube]# ls
+cache  config  http-cache  users
+[root@kube-master .kube]# cd users
+[root@kube-master users]# ls
+[root@kube-master users]# openssl genrsa -out maya.key 2048
+Generating RSA private key, 2048 bit long modulus
+................+++
+................+++
+e is 65537 (0x10001)
+[root@kube-master users]# openssl genrsa -out kim.key 2048
+Generating RSA private key, 2048 bit long modulus
+........+++
+..+++
+e is 65537 (0x10001)
+[root@kube-master users]# openssl genrsa -out yono.key 2048
+Generating RSA private key, 2048 bit long modulus
+.....+++
+........+++
+e is 65537 (0x10001)
+[root@kube-master users]#
+
+create a Certification Signing Request (CSR) for each of the users. When you generate the csr make sure you also provide
+
+CN: This will be set as username
+O: Org name. This is actually used as a group by kubernetes while authenticating/authorizing users. You could add as many as you need
+
+[root@kube-master users]#
+[root@kube-master users]# openssl req -new -key maya.key -out maya.csr -subj "/CN=maya/O=ops/O=example"
+[root@kube-master users]# openssl req -new -key kim.key -out kim.csr -subj "/CN=kim/O=dev/O=example"
+[root@kube-master users]# openssl req -new -key yono.key -out yono.csr -subj "/CN=kim/O=interns/O=example"
+[root@kube-master users]#
+
+
+$ file ca.pem
+ca.pem: PEM certificate
+
+$ file ca-key.pem
+ca-key.pem: PEM RSA private key
+
+In order to be deemed authentic, these CSRs need to be signed by the Certification Authority (CA) which in this case is Kubernetes Master. You need access to the folllwing files on kubernetes master.
+
+Certificate : ca.crt (kubeadm) or ca.key (kubespray)
+Pricate Key : ca.key (kubeadm) or ca-key.pem (kubespray)
+You would typically find it at one of the following paths
+
+/etc/kubernetes/pki (kubeadm)
+/etc/kubernetes/ssl (kubespray)
+
+[root@kube-master users]# openssl x509 -req -in maya.csr -CA /etc/kubernetes/pki/ca.crt -CAkey /etc/kubernetes/pki/ca.key -CAcreateserial -out maya.crt -days 500
+Signature ok
+subject=/CN=maya/O=ops/O=example
+Getting CA Private Key
+[root@kube-master users]#
+[root@kube-master users]#
+[root@kube-master users]#
+[root@kube-master users]# openssl x509 -req -in kim.csr -CA /etc/kubernetes/pki/ca.crt -CAkey /etc/kubernetes/pki/ca.key -CAcreateserial -out kim.crt -days 500
+Signature ok
+subject=/CN=kim/O=dev/O=example
+Getting CA Private Key
+[root@kube-master users]#
+[root@kube-master users]# openssl x509 -req -in yono.csr -CA /etc/kubernetes/pki/ca.crt -CAkey /etc/kubernetes/pki/ca.key -CAcreateserial -out yono.crt -days 500
+Signature ok
+subject=/CN=kim/O=interns/O=example
+Getting CA Private Key
+[root@kube-master users]#
+
+Setting up User configs with kubectl
+
+[root@kube-master users]# ls
+kim.crt  kim.csr  kim.key  maya.crt  maya.csr  maya.key  yono.crt  yono.csr  yono.key
+[root@kube-master users]# kubectl config set-credentials maya --client-certificate=/root/.kube/users/maya.crt --client-key=/root/.kube/users/maya.key
+User "maya" set.
+[root@kube-master users]# kubectl config set-credentials kim --client-certificate=/root/.kube/users/kim.crt --client-key=/root/.kube/users/kim.key
+User "kim" set.
+[root@kube-master users]# kubectl config set-credentials yono --client-certificate=/root/.kube/users/yono.crt --client-key=/root/.kube/users/yono.key
+User "yono" set.
+[root@kube-master users]#
+[root@kube-master users]# kubectl config view
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority-data: DATA+OMITTED
+    server: https://10.193.112.68:6443
+  name: kubernetes
+contexts:
+- context:
+    cluster: kubernetes
+    namespace: instavote
+    user: kubernetes-admin
+  name: kubernetes-admin@kubernetes
+current-context: kubernetes-admin@kubernetes
+kind: Config
+preferences: {}
+users:
+- name: kim
+  user:
+    client-certificate: users/kim.crt
+    client-key: users/kim.key
+- name: kubernetes-admin
+  user:
+    client-certificate-data: REDACTED
+    client-key-data: REDACTED
+- name: maya
+  user:
+    client-certificate: users/maya.crt
+    client-key: users/maya.key
+- name: yono
+  user:
+    client-certificate: users/yono.crt
+    client-key: users/yono.key
+[root@kube-master users]# kubectl config set-context maya-prod --cluster=kubernetes --user=maya
+Context "maya-prod" created.
+[root@kube-master users]# kubectl config set-context kim-prod --cluster=kubernetes --user=kim
+Context "kim-prod" created.
+[root@kube-master users]# kubectl config set-context yono-prod --cluster=kubernetes --user=yono
+Context "yono-prod" created.
+[root@kube-master users]#
+
+
+
+[root@kube-master users]# kubectl config get-contexts
+CURRENT   NAME                          CLUSTER      AUTHINFO           NAMESPACE
+          kim-prod                      kubernetes   kim
+*         kubernetes-admin@kubernetes   kubernetes   kubernetes-admin   instavote
+          maya-prod                     kubernetes   maya
+          yono-prod                     kubernetes   yono
+[root@kube-master users]#  kubectl config use-context yono-prod
+Switched to context "yono-prod".
+[root@kube-master users]#
+
+To set context for prod cluster,
+
+# kubectl config set-context maya-prod --cluster=prod  --user=maya --namespace=instavote
+
+# kubectl config set-context kim-prod --cluster=prod  --user=kim --namespace=instavote
+
+#  kubectl config set-context yono-prod --cluster=prod  --user=yono --namespace=instavote
+
+
+[root@kube-master RBAC]# kubectl  get roles -n instavote
+NAME      AGE
+interns   32m
+[root@kube-master RBAC]# kubectl  get roles,rolebinding -n instavote
+NAME                                     AGE
+role.rbac.authorization.k8s.io/interns   32m
+
+NAME                                            AGE
+rolebinding.rbac.authorization.k8s.io/interns   32m
+[root@kube-master RBAC]#
+
+
+kubectl get roles -n instavote
+kubectl get roles,rolebindings -n instavote
+
+kubectl describe role interns
+kubectl describe rolebinding interns
+
+To switch back to admin,
+# kubectl config get-context
+# kubectl config use-context <admin_context>
+

@@ -1,0 +1,107 @@
+Create the Namespace
+
+kubectl create namespace logging
+
+Deploy Elasticsearch
+-----------------------------------------------------------------------------
+Option 1: This is a non-production installation of Elasticsearch.
+
+kubectl run elasticsearch \
+	--image=docker.elastic.co/elasticsearch/elasticsearch:6.3.2
+
+kubectl expose deploy elasticsearch --port 9200
+
+Option 2: Helm installation of Elasticsearch. We will disable persistence for simplicity. Warning this will consume a lot of memory in your cluster.
+
+Source: https://github.com/helm/charts/tree/master/incubator/elasticsearch
+
+helm repo add incubator https://kubernetes-charts-incubator.storage.googleapis.com/
+helm install --name elasticsearch incubator/elasticsearch \
+    --set master.persistence.enabled=false \
+    --set data.persistence.enabled=false \
+    --set image.tag=6.4.2 \
+    --namespace logging
+=======================================================================================
+Deploy Kibana
+=======================================================================================
+If you used Elasticsearch deployment Option 1:
+
+helm install --name kibana stable/kibana \
+    --set env.ELASTICSEARCH_URL=http://elasticsearch:9200 \
+    --set image.tag=6.4.2 \
+    --namespace logging
+If you used Elasticsearch deployment Option 2:
+
+helm install --name kibana stable/kibana \
+    --set env.ELASTICSEARCH_URL=http://elasticsearch-client:9200 \
+    --set image.tag=6.4.2 \
+    --namespace logging
+
+==========================================================================================
+Deploy Fluent Bit
+==========================================================================================
+All step from here is mostly based on the Fluent Bit Kubernetes Deployment document and all files used are versioned in Github here.
+
+Create the RBAC resources for Fluent Bit
+
+kubectl apply -f https://raw.githubusercontent.com/fluent/fluent-bit-kubernetes-logging/master/fluent-bit-service-account.yaml
+
+kubectl apply -f https://raw.githubusercontent.com/fluent/fluent-bit-kubernetes-logging/master/fluent-bit-role.yaml
+
+kubectl apply -f https://raw.githubusercontent.com/fluent/fluent-bit-kubernetes-logging/master/fluent-bit-role-binding.yaml
+
+Create the Fluent Bit Config Map
+
+This Config Map will be used as the base configuration of the Fluent Bit container. You will see keywords such as INPUT, OUTPUT, FILTER, and PARSER in this file.
+
+kubectl apply -f https://raw.githubusercontent.com/fluent/fluent-bit-kubernetes-logging/master/output/elasticsearch/fluent-bit-configmap.yaml
+
+================================================================================================
+Deploy the Fluent Bit DaemonSet
+=================================================================================================
+Fluent Bit must be deployed as a DaemonSet, so on that way, Kubernetes will ensure that there is at least one FluentBit container running in each Kubernetes node.
+
+If you used Elasticsearch deployment Option 1:
+
+kubectl apply -f https://raw.githubusercontent.com/fluent/fluent-bit-kubernetes-logging/master/output/elasticsearch/fluent-bit-ds.yaml
+
+If you used Elasticsearch deployment Option 2:
+
+You will have to download the YAML file first and modify the FLUENT_ELASTICSEARCH_HOST variable from elasticsearch to elasticsearch-client.
+
+wget https://raw.githubusercontent.com/fluent/fluent-bit-kubernetes-logging/master/output/elasticsearch/fluent-bit-ds.yaml
+
+# modify as recommended, then:
+kubectl apply -f https://raw.githubusercontent.com/fluent/fluent-bit-kubernetes-logging/master/output/elasticsearch/fluent-bit-ds.yaml
+
+Check if everything is running
+
+NAME                                   READY   STATUS    RESTARTS   AGE
+elasticsearch-client-bdffbf85b-9mv27   1/1     Running   0          68m
+elasticsearch-client-bdffbf85b-n7kfw   1/1     Running   0          68m
+elasticsearch-data-0                   1/1     Running   0          68m
+elasticsearch-data-1                   1/1     Running   0          64m
+elasticsearch-master-0                 1/1     Running   0          68m
+elasticsearch-master-1                 1/1     Running   0          66m
+elasticsearch-master-2                 1/1     Running   0          65m
+fluent-bit-cvlvv                       1/1     Running   0          64m
+fluent-bit-gj6f9                       1/1     Running   0          64m
+fluent-bit-xt565                       1/1     Running   0          64m
+kibana-654bdb6784-dpk6z                1/1     Running   0          66m
+nginx-7cdbd8cdc9-pssxb                 1/1     Running   0          60m
+
+# kubectl port-forward kibana-654bdb6784-dpk6z 5601
+
+To Expose the service to particualar port use NodePort service 
+
+Note: Here Option 1: and Option 2 are two different methods 
+ option 1  is used for  Non-production purpose
+
+http://medium.com/@jbsazon/aggregated-kubernetes-container-logs-with-fluent-bit-elasticsearch-and-kibana-5a9708c5dd9a
+
+
+https://blog.codersociety.com/setting-up-logging-within-kubernetes-on-aws-9840c72208c7
+
+https://akomljen.com/get-kubernetes-logs-with-efk-stack-in-5-minutes/
+
+https://blog.ptrk.io/how-to-deploy-an-efk-stack-to-kubernetes/

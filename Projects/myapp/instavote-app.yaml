@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+   name: instavote
+   namespace: instavote
+spec:
+   replicas: 8
+   strategy:
+     type: RollingUpdate
+     rollingUpdate:
+       maxSurge: 2
+       maxUnavailable: 1
+   revisionHistoryLimit: 5
+   paused: false
+   minReadySeconds: 10
+   selector:
+      matchLabels:
+          name: instavote
+          version: v1
+          tier: dev
+      matchExpressions:
+       - {key: version, operator: In,values: [v1,v2,dev]}
+   template:
+      metadata:
+          name: my-app
+          labels:
+             name: instavote
+             version: v1
+             tier: dev
+      spec:
+        containers:
+          - name: python
+            image: wonchaitanya/vote:v2
+            ports:
+              - containerPort: 80
+                protocol: TCP
+            resources:
+             limits:
+               cpu: "200m"
+               memory: "250Mi"
+             requests:
+                cpu: "100m"
+                memory: "100Mi"
+        restartPolicy: Always
+

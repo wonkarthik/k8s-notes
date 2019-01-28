@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+   name: python-canary
+spec:
+   replicas: 3
+   strategy:
+      type: RollingUpdate
+      rollingUpdate:
+         maxSurge: 2
+         maxUnavailable: 1
+   revisionHistoryLimit: 4
+   paused: false
+   selector:
+      matchLabels:
+        role: vote
+   minReadySeconds: 10
+   template: 
+      metadata:
+        labels:
+          role: vote
+          app: python 
+      spec:
+        containers:
+          - name: vote-app
+            image: wonchaitanya/vote:v3
+            ports:
+              - containerPort: 80
+                protocol: TCP 
+          

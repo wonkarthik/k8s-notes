@@ -1,0 +1,21 @@
+apiVersion: metrics.k8s.io/v1beta1
+kind: Pod
+metadata: 
+  name: hpa
+  labels:
+     app: python
+     role: vote
+spec:
+  containers:
+     - name: app
+       image: wonchaitanya/vote:v2
+       ports:
+         - containerPort: 80
+           protocol: TCP
+       resources:
+         limits:
+            cpu: "200m"
+            memory: "250mi"
+         requests:
+            cpu: "100m"
+            memory: "50mi"

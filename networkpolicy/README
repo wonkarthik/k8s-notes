@@ -1,0 +1,7 @@
+
+
+Ingress vs. Egress traffic on Inside and Outside interfaces. ... Similarly, egress traffic on an outside (WAN) interface should also technically be flowing OUT, since it is being transmitted by the WAN on its way out of the network.
+
+
+Ingress: Incoming Traffic
+Egress: OutGoing Traffic

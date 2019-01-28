@@ -1,0 +1,35 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: 
+  name: default-deny
+spec: 
+  podSelector: {}
+  policyTypes:
+   - Ingress
+   - Egress
+  ingress:
+   - from:
+      - namespaceSelector:
+         matchLabels:
+          project: instavote
+  egress:
+   - to:
+      - namespaceSelector:
+         matchLabels:
+           project: instavote
+# app instavote was able to access inside the node and access to external world .but not accessing across cluster nodes
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: public
+spec:
+  podSelector: 
+    matchExpressions:
+      - {key: role,operator: In,values: [vote,results]}
+      - {key: version,operator: In,values: [v1,v2]}
+  policyTypes:
+   - Ingress
+  ingress:
+   - {}
+# To access the app inside the cluster nodes and externally 

@@ -1,0 +1,14 @@
+apiVersion: batch/v1
+kind: Job
+metadata: 
+  name: hpa
+spec: 
+   template: 
+     spec: 
+       containers:
+        - name: siege-load
+          image: schoolofdevops/loadtest:v1
+          command: ["siege", "--concurrent=5","--benchmark","--time=5m","http://vote"]
+       restartPolicy: Never
+   completions: 2
+   parallelism: 1

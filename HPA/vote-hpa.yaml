@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: hpa
+spec: 
+  replicas: 8
+  strategy:
+   type: RollingUpdate
+   rollingUpdate: 
+      maxSurge: 3
+      maxUnavailable: 1
+  revisionHistoryLimit: 4
+  paused: false
+  minReadySeconds: 10
+  selector:
+    matchLabels:
+        name: app
+        version: v2
+        role: hpa
+    matchExpressions:
+        - {key: version, operator: In, values: [v1,v2,v3]}
+  template:
+    metadata:
+      name: python
+      labels:
+         name: app
+         role: hpa
+         version: v2  
+    spec:
+        containers:
+          - name: myapp
+            image: wonchaitanya/vote:v2
+            ports:
+             - containerPort: 80
+               protocol: TCP
+               
+            resources:
+               limits:
+                 cpu: "200m"
+                 memory: "200Mi"
+               requests:  
+                 cpu: "100m"
+                 memory: "100Mi"
+
+
+
+
+
+

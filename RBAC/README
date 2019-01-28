@@ -1,0 +1,14 @@
+
+
+Role: Grant access to particular namespace.  it contains
+ resources: what kinds of access fo which resources
+ verbs: Action to list the resources,delete and watch the resources
+
+ClusterRole: if you want ot provide access to complete cluster with all namespaces.The differnece between the role and clusterole is scope . it has complete access to cluster.
+  
+
+Role Binding and Cluster rolebinding
+
+A role binding grants there permissions defined in a role to a user or set of users.it holds subject (usres,group,service accounts) ans permission being granted within a namespace is cal Rolebinding.
+
+Clusterrolebinding: the rolebinding accross the cluster wide is clusterrolebinding.

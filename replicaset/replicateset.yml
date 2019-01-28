@@ -1,0 +1,30 @@
+---
+apiVersion: apps/v1
+kind: ReplicaSet 
+metadata: 
+   name: backend
+   labels:
+      app: note
+      tier: backend
+spec:
+    replicas: 2
+    selector:
+       matchLabels: 
+         role: note
+       matchExpressions:
+          - {key: version, operator: In, values: [ v1, v2, v3]}
+    template:
+       metadata:
+          name: vote
+          labels:
+              app: note
+              role: note
+              version: v1
+       spec:
+         containers:
+             - name: app
+               image: wonchaitanya/vote:v1
+               ports:
+                  - containerPort: 80
+                    protocol: TCP  
+ 

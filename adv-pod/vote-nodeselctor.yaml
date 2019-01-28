@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: selector 
+  labels:
+    app: python
+    role: test
+    version: v1
+spec:
+  nodeSelector:
+   project: test
+  containers:
+    - name: app
+      image: wonchaitanya/vote:v1
+      ports:
+        - containerPort: 80
+          protocol: TCP

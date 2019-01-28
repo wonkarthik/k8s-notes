@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+   name: redis
+   labels:
+      role: tier
+   namespace: default
+spec:
+   selector:
+       name: redis
+   ports:   
+   - port: 6379
+     protocol: TCP
+     targetPort: 6379  

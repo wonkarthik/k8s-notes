@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-affpod
+spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 2
+      maxUnavailable: 1
+  revisionHistoryLimit: 4
+  paused: false
+  replicas: 2
+  minReadySeconds: 20
+  selector:
+    matchLabels:
+      role: redis
+  template:
+    metadata:
+      name: vote
+      labels:
+        app: python
+        role: redis
+        version: v2
+    spec:
+      containers:
+        - name: redis
+          image: schoolofdevops/redis:latest
+          ports:
+            - containerPort: 6379
+              protocol: TCP
+      restartPolicy: Always
+      affinity:
+       podAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                     role: vote
+                topologyKey: kubernetes.io/hostname
+       podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+             - labelSelector:
+                 matchExpressions:
+                   - key: role
+                     operator: In
+                     values:
+                        - redis
+               topologyKey: kubernetes.io/hostname
