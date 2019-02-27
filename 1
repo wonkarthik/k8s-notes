@@ -46,10 +46,6 @@ Remove all docker images	docker rmi $(docker images -q)
 Remove orphaned docker volumes	docker volume rm $(docker volume ls -qf dangling=true)
 Remove dead containers		docker rm $(docker ps --filter status=dead -qa)
 Remove exited containers	docker rm $(docker ps --filter status=exited -qa)
-Remove all stopped containers	docker container rm `docker container ls -a -q`
-Remove all unused (container,images networks & volumes )  docker system prune -f
-Remove all			docker system prune -a
-
 
 1.5 DOCKERFILE
 Name					Summary
