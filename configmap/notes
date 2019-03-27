@@ -6,3 +6,18 @@ There are several ways to pass variables to an application:
  A major  disadvantage of hardcoding is that each time you need to change the values, you have to edit the code. This is not a desirable feature. When stored as environmental variables, you just have to change the values of the environmental variables. This is far better than hardcoded variables.
 
 With containers, environmental variables serve the same purpose of passing variables to the containers. The choice here is either to hardcode them in each container or to have them in a central place accessible to all containers.  Kubernetes ConfigMaps and Secret help with storing them in a central place accessible to all containers. Kubernetes ConfigMaps are used for non-sensitive data while secrets are used for sensitive data.
+
+
+
+
+
+Note:
+
+1. ConfigMap must be created before being referenced in a Pod specification (unless you mark the ConfigMap as “optional”).  Otherwise:
+ - The Pod won’t start if a referenced ConfigMap  doesn’t exist.
+ - The Pod won’t start if referenced key doesn’t exist in the ConfigMap
+2. ConfigMaps reside in a specific namespace. A ConfigMap can only be referenced by pods residing in the same namespace.
+
+
+
+
