@@ -1,6 +1,6 @@
 # k8s-notes
 Master Components
-Below are the main components found on the master node:
+Below are the main components found on the master node
 
 ````````
 etcd cluster - a simple, distributed key value storage which is used to store the Kubernetes cluster data (such as number of pods, their state, namespace, etc), API objects and service discovery details. It is only accessible from the API server for security reasons. etcd enables notifications to the cluster about configuration changes with the help of watchers. Notifications are API requests on each etcd cluster node to trigger the update of information in the node’s storage.
