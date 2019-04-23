@@ -54,6 +54,7 @@ spec:
     - ReadWriteOnce
   hostPath:
     path: "/mnt/data"
+
 Step 2: Create a Persistent Volume Claim (PVC)
 A PVC is required to bind to a PV. Pods use PersistentVolumeClaims to request physical storage.  A PVC can specify a label selector to further filter the set of volumes. Only the volumes whose labels match the selector can be bound to the claim. Here is an example of a PVC.
 
@@ -68,6 +69,7 @@ spec:
   resources:
     requests:
       storage: 3Gi
+
 Step 3: Create a Pod to use PVC
 The next step is to create a Pod that uses your PersistentVolumeClaim  to   mount a volume  at a specified mount point.
 
@@ -89,6 +91,7 @@ spec:
       volumeMounts:
         - mountPath: "/usr/share/nginx/html"
           name: task-pv-storage
+
 Deploy ROOK with a Ceph Cluster Backend
 Now that we know what Rook is all about and some knowledge of how to connect your Pod to a persistent volume, let us create a Rook cluster with a Ceph backend. We will test the Rook deployment with 2 sample applications that  creates PV, PVC and some pods.  Let us follow the following plan:
 
@@ -96,6 +99,7 @@ Now that we know what Rook is all about and some knowledge of how to connect you
  Create a Rook Cluster
 Add Block Storage to Ceph
 Verify Block Storage Operation
+
 Step 1: Deploy Rook Operator
 Remember that you need a working Kubernetes cluster to follow this tutorial. This tutorial uses a Kubernetes cluster of 1 Master node and 2 Worker Nodes, making a 3-node cluster.
 
@@ -111,14 +115,15 @@ Check that the following pods are in Running state before proceeding:
 rook-ceph-operator
 rook-ceph-agent
 rook-discover
+
 $ kubectl get pods -n rook-ceph-system | grep Running
 NAME READY STATUS RESTARTS AGE
-
 rook-ceph-agent-btzrg 1/1 Running 11 9d
 rook-ceph-agent-nhs6l 1/1 Running 11 9d
 rook-ceph-operator-b996864dd-2rptc 1/1 Running 9 8d
 rook-discover-7j78x 1/1 Running 7 9d
 rook-discover-zfvkx 1/1 Running 8 9d
+
 Step 2: Create a Rook Cluster
 Open cluster.yaml and edit the file to use filestore instead of bluestore:
 
@@ -149,6 +154,7 @@ rook-ceph rook-ceph-mon-i-867d64c849-xp272 1/1 Running 2 8d
 rook-ceph rook-ceph-osd-0-6495594f8d-2pf2z 1/1 Running 2 7d23h
 rook-ceph rook-ceph-osd-1-7d694d4f5-thptb 1/1 Running 2 8d
 rook-ceph rook-ceph-tools-76c7d559b6-gzpkz 1/1 Running 2 8d
+
 Step 3: Add Block Storage
 Now that Rook is up and running connected to a Ceph cluster backend, let us configure a storageclass to use the Block storage of Ceph. Block storage provides a traditional block storage device — like a hard drive – over the network. With the storage class created, one can provision a block storage device of any size and attach it to a pod. Once attached, it is treated like a normal hard disk. To make it ready for use, you need to format it with a filesystem of choice like Ext4, XFS or BtrFS. If desired, block volumes can combine multiple devices into a RAID array, or configure a database to write directly to the block device, avoiding filesystem overhead entirely.
 
@@ -183,6 +189,7 @@ cd rook/cluster/examples/kubernetes/ceph
 kubectl create -f storageclass.yaml
 pool.ceph.rook.io/replicapool created
 storageclass.storage.k8s.io/rook-ceph-block created
+
 Step 4: Verify Block Storage Operation
 Example 1: StatefulSets
 Let us verify the configuration by creating a statefulset. The manifest file for a statefulset is below:
@@ -286,6 +293,7 @@ spec:
   resources:
     requests:
       storage: 20Gi
+
 kubectl get pv
 NAME CAPACITY ACCESS MODES RECLAIM POLICY STATUS CLAIM STORAGECLASS REASON AGE
 pvc-8d2874c3-4607-11e9-af13-02d2ebb64d8b 20Gi RWO Delete Bound default/mysql-pv-claim  rook-ceph-block 8d 
