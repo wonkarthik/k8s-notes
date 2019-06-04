@@ -1,0 +1,73 @@
+(I) Configure Memory and CPU Quotas for a Particular Namespace :
+
+ Resource Quotas applied on namespaces, we can limit the cluster resources usage of a particular set of users.
+ A resource quota is responsible for limiting resource consumption per namespace. It also can limit the quantity
+ of objects that can be created in a namespace by type, as well as the total amount of compute resources that may
+ be consumed by resources in that namespace.
+
+# kubectl create namespace quota-mem-cpu
+
+# cat quota-mem-cpu.yaml
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: mem-cpu-demo
+spec:
+  hard:
+    requests.cpu: "1"
+    requests.memory: 1Gi
+    limits.cpu: "2"
+    limits.memory: 2Gi
+
+# kubectl get resourcequota mem-cpu-demo --namespace=quota-mem-cpu-example --output=yaml    
+
+Every Container must have a memory request, memory limit, cpu request, and cpu limit.
+The memory request total for all Containers must not exceed 1 GiB.
+The memory limit total for all Containers must not exceed 2 GiB.
+The CPU request total for all Containers must not exceed 1 cpu.
+The CPU limit total for all Containers must not exceed 2 cpu
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: quota-mem-cpu-demo
+spec:
+  containers:
+  - name: quota-mem-cpu-demo-ctr
+    image: nginx
+    resources:
+      limits:
+        memory: "800Mi"
+        cpu: "800m" 
+      requests:
+        memory: "600Mi"
+        cpu: "400m"
+
+Detail status of quota-mem-cpu in particular namespace
+
+# kubectl get resourcequota mem-cpu-demo --namespace=quota-mem-cpu --output=yaml
+
+==================================================================================
+
+(II) Configure a Pod Quota for a particular Namespace : 
+
+# kubectl create namespace quota-pod-example
+
+# cat resource-quota.yaml
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: pod-demo
+spec:
+  hard:
+    pods: "2"
+
+# kubectl get resourcequota pod-demo --namespace=quota-pod-example --output=yaml
+
+** Note: if pod tries to create more than 2 pods it starts failing
+
+
+
+
+
+
