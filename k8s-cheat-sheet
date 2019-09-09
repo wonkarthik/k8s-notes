@@ -39,6 +39,7 @@ Delete all resources filtered by labels kubectl delete pods,services -l name=myL
 Delete resources under a namespace 	kubectl -n my-ns delete po,svc --all
 Delete persist volumes by labels 	kubectl delete pvc -l app=wordpress
 Delete statefulset only (not pods) 	kubectl delete sts/<stateful_set_name> --cascade=false
+Delete all resources available in the folder kubectl delete -f <folder_name>
 
 1.4 Log & Conf Files
 Config folder 			/etc/kubernetes/
